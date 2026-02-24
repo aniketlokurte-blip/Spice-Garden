@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍽️ Spice Garden — Billing System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --saffron: #FF6B00;
+      --gold: #FFB347;
+      --cream: #FFF8F0;
+      --dark: #1A0E00;
+      --brown: #3D1F00;
+      --card: #FFFFFF;
+      --border: #F0DCC8;
+      --text: #2D1500;
+      --muted: #8B6347;
+      --green: #2E7D32;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--dark);
+      padding: 18px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      color: var(--gold);
+      font-size: 1.6rem;
+      letter-spacing: 1px;
+    }
+    header span {
+      color: var(--saffron);
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: rgba(255,107,0,0.15);
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--saffron);
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 28px 20px;
+    }
+
+    /* CUSTOMER INFO */
+    .info-bar {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .info-bar input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--cream);
+      outline: none;
+      transition: border 0.2s;
+    }
+    .info-bar input:focus { border-color: var(--saffron); }
+    .info-bar input::placeholder { color: var(--muted); }
+
+    /* CATEGORY TABS */
+    .cat-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .cat-tab {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 30px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--brown);
+      font-weight: 500;
+    }
+    .cat-tab.active, .cat-tab:hover {
+      background: var(--saffron);
+      border-color: var(--saffron);
+      color: white;
+    }
+
+    /* MENU GRID */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .category-section { display: none; }
+    .category-section.active { display: contents; }
+
+    .menu-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: box-shadow 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .menu-card:hover {
+      box-shadow: 0 8px 24px rgba(255,107,0,0.12);
+      transform: translateY(-2px);
+    }
+    .menu-card.in-cart {
+      border-color: var(--saffron);
+      background: #FFF5EC;
+    }
+    .item-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .item-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      color: var(--saffron);
+      font-weight: 600;
+    }
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: auto;
+    }
+    .qty-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--saffron);
+      background: white;
+      color: var(--saffron);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .qty-btn:hover { background: var(--saffron); color: white; }
+    .qty-display {
+      font-weight: 700;
+      font-size: 1rem;
+      min-width: 24px;
+      text-align: center;
+      color: var(--text);
+    }
+    .added-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: var(--saffron);
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* SIDEBAR — ORDER SUMMARY */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      height: fit-content;
+    }
+    .order-card {
+      background: var(--card);
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    }
+    .order-header {
+      background: var(--dark);
+      padding: 18px 22px;
+      color: white;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+    }
+    .order-header small {
+      display: block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      color: var(--gold);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+    .order-items {
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .order-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 0.88rem;
+    }
+    .order-item-row:last-child { border-bottom: none; }
+    .order-item-row .name { color: var(--text); font-weight: 500; flex: 1; }
+    .order-item-row .qty-tag {
+      background: #FFF0E0;
+      color: var(--saffron);
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin: 0 8px;
+    }
+    .order-item-row .amt { font-weight: 600; color: var(--brown); }
+
+    .empty-cart {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .empty-cart .icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+    .totals {
+      padding: 16px 20px;
+      border-top: 1.5px solid var(--border);
+      background: #FAFAFA;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      padding: 4px 0;
+      color: var(--muted);
+    }
+    .total-row.grand {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      border-top: 1.5px solid var(--border);
+      margin-top: 8px;
+      padding-top: 10px;
+    }
+    .total-row.grand span:last-child { color: var(--saffron); }
+
+    .bill-btn {
+      width: calc(100% - 32px);
+      margin: 16px;
+      background: var(--saffron);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.5px;
+    }
+    .bill-btn:hover { background: #e55f00; transform: scale(1.01); }
+    .bill-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+    .clear-btn {
+      width: calc(100% - 32px);
+      margin: 0 16px 16px;
+      background: transparent;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .clear-btn:hover { border-color: #e00; color: #e00; }
+
+    /* BILL MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .bill-header {
+      background: var(--dark);
+      color: white;
+      padding: 28px 24px 20px;
+      text-align: center;
+    }
+    .bill-header h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--gold);
+      font-size: 1.5rem;
+    }
+    .bill-header p { font-size: 0.82rem; color: #aaa; margin-top: 4px; line-height: 1.6; }
+    .bill-body { padding: 20px 24px; }
+    .bill-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1.5px dashed var(--border);
+    }
+    .bill-meta strong { color: var(--text); font-weight: 600; }
+    .bill-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .bill-table th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 4px 0 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .bill-table th:last-child, .bill-table td:last-child { text-align: right; }
+    .bill-table td { padding: 8px 0; border-bottom: 1px dashed #F0E8DE; color: var(--text); }
+    .bill-divider {
+      border: none;
+      border-top: 1.5px solid var(--border);
+      margin: 14px 0;
+    }
+    .bill-totals { font-size: 0.9rem; }
+    .bill-totals .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      color: var(--muted);
+    }
+    .bill-totals .row.grand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      border-top: 2px solid var(--dark);
+      margin-top: 8px;
+      padding-top: 10px;
+    }
+    .bill-totals .row.grand span:last-child { color: var(--saffron); }
+    .bill-footer-msg {
+      text-align: center;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .payment-modes {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .payment-modes span {
+      background: #F5F5F5;
+      border-radius: 8px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--brown);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      padding: 0 24px 24px;
+    }
+    .btn-print {
+      flex: 1;
+      background: var(--saffron);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .btn-print:hover { background: #e55f00; }
+    .btn-close {
+      flex: 1;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .btn-close:hover { border-color: var(--text); color: var(--text); }
+
+    @media (max-width: 768px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .info-bar { flex-direction: column; }
+    }
+    @media print {
+      body * { visibility: hidden; }
+      .modal, .modal * { visibility: visible; }
+      .modal { position: absolute; top: 0; left: 0; width: 100%; box-shadow: none; }
+      .modal-actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🍽️ Spice Garden</h1>
+  <span>Billing System · ₹ INR</span>
+</header>
+
+<div class="main-layout">
+  <!-- LEFT: MENU -->
+  <div>
+    <!-- Customer Info -->
+    <div class="info-bar">
+      <input type="text" id="customerName" placeholder="👤 Customer Name" />
+      <input type="text" id="tableNumber" placeholder="🪑 Table Number" style="max-width:160px"/>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="cat-tabs" id="catTabs">
+      {% for category in menu %}
+      <button class="cat-tab {% if loop.first %}active{% endif %}"
+              onclick="showCategory('{{ category }}', this)">
+        {{ icons[category] }} {{ category }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- Menu Items -->
+    <div class="menu-grid" id="menuGrid">
+      {% for category, items in menu.items() %}
+      <div class="category-section {% if loop.first %}active{% endif %}" id="cat-{{ category | replace(' ', '_') }}">
+        {% for item, price in items.items() %}
+        <div class="menu-card" id="card-{{ loop.index0 }}-{{ category | replace(' ', '_') }}" data-item="{{ item }}" data-price="{{ price }}">
+          <div class="item-name">{{ item }}</div>
+          <div class="item-price">₹{{ price }}</div>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty('{{ item }}', {{ price }}, -1, this)">−</button>
+            <span class="qty-display" id="qty-{{ item | replace(' ', '_') | replace('(', '') | replace(')', '') }}">0</span>
+            <button class="qty-btn" onclick="changeQty('{{ item }}', {{ price }}, 1, this)">+</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- RIGHT: ORDER SUMMARY -->
+  <div class="sidebar">
+    <div class="order-card">
+      <div class="order-header">
+        🛒 Your Order
+        <small>Items will appear here as you add them</small>
+      </div>
+      <div class="order-items" id="orderItems">
+        <div class="empty-cart">
+          <div class="icon">🍽️</div>
+          No items added yet.<br/>Select dishes from the menu.
+        </div>
+      </div>
+      <div class="totals" id="totalsBox" style="display:none">
+        <div class="total-row"><span>Subtotal</span><span id="subtotalVal">₹0</span></div>
+        <div class="total-row"><span>GST (5%)</span><span id="gstVal">₹0</span></div>
+        <div class="total-row"><span>Service Charge (10%)</span><span id="serviceVal">₹0</span></div>
+        <div class="total-row grand"><span>Total</span><span id="totalVal">₹0</span></div>
+      </div>
+      <button class="bill-btn" id="billBtn" onclick="generateBill()" disabled>🧾 Generate Bill</button>
+      <button class="clear-btn" onclick="clearAll()">✕ Clear Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- BILL MODAL -->
+<div class="modal-overlay" id="billModal">
+  <div class="modal">
+    <div class="bill-header">
+      <h2>🍽️ Spice Garden Restaurant</h2>
+      <p>123, MG Road, Bengaluru - 560001<br/>
+         📞 +91 98765 43210 &nbsp;|&nbsp; GSTIN: 29ABCDE1234F1Z5</p>
+    </div>
+    <div class="bill-body">
+      <div class="bill-meta">
+        <div><div>Customer</div><strong id="billCustomer">—</strong></div>
+        <div style="text-align:center"><div>Table</div><strong id="billTable">—</strong></div>
+        <div style="text-align:right"><div>Date & Time</div><strong id="billDate">—</strong></div>
+      </div>
+      <table class="bill-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th style="text-align:center">Qty</th>
+            <th style="text-align:right">Rate</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="billItems"></tbody>
+      </table>
+      <hr class="bill-divider"/>
+      <div class="bill-totals">
+        <div class="row"><span>Subtotal</span><span id="bSubtotal">₹0</span></div>
+        <div class="row"><span>GST (5%)</span><span id="bGst">₹0</span></div>
+        <div class="row"><span>Service Charge (10%)</span><span id="bService">₹0</span></div>
+        <div class="row grand"><span>TOTAL</span><span id="bTotal">₹0</span></div>
+      </div>
+      <div class="bill-footer-msg">
+        <div class="payment-modes">
+          <span>💵 Cash</span><span>📱 UPI</span><span>💳 Card</span>
+        </div>
+        🙏 Thank you for dining with us!<br/>Please visit again!
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-print" onclick="window.print()">🖨️ Print Bill</button>
+      <button class="btn-close" onclick="closeBill()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const order = {};  // { itemName: { price, qty } }
+
+  function itemId(name) {
+    return name.replace(/[\s()]/g, '_');
+  }
+
+  function showCategory(cat, btn) {
+    document.querySelectorAll('.category-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('cat-' + cat.replace(/ /g, '_')).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function changeQty(item, price, delta, btn) {
+    if (!order[item]) order[item] = { price, qty: 0 };
+    order[item].qty = Math.max(0, order[item].qty + delta);
+    const qtyEl = document.getElementById('qty-' + itemId(item));
+    if (qtyEl) qtyEl.textContent = order[item].qty;
+
+    const card = btn.closest('.menu-card');
+    if (order[item].qty > 0) {
+      card.classList.add('in-cart');
+      if (!card.querySelector('.added-badge')) {
+        const badge = document.createElement('div');
+        badge.className = 'added-badge';
+        badge.textContent = 'Added';
+        card.appendChild(badge);
+      }
+    } else {
+      card.classList.remove('in-cart');
+      const badge = card.querySelector('.added-badge');
+      if (badge) badge.remove();
+      delete order[item];
+    }
+    updateSidebar();
+  }
+
+  function updateSidebar() {
+    const container = document.getElementById('orderItems');
+    const totalsBox = document.getElementById('totalsBox');
+    const billBtn = document.getElementById('billBtn');
+    const entries = Object.entries(order).filter(([, v]) => v.qty > 0);
+
+    if (entries.length === 0) {
+      container.innerHTML = `<div class="empty-cart"><div class="icon">🍽️</div>No items added yet.<br/>Select dishes from the menu.</div>`;
+      totalsBox.style.display = 'none';
+      billBtn.disabled = true;
+      return;
+    }
+
+    let subtotal = 0;
+    let html = '';
+    entries.forEach(([name, {price, qty}]) => {
+      const amt = price * qty;
+      subtotal += amt;
+      html += `<div class="order-item-row">
+        <span class="name">${name}</span>
+        <span class="qty-tag">×${qty}</span>
+        <span class="amt">₹${amt}</span>
+      </div>`;
+    });
+    container.innerHTML = html;
+
+    const gst = Math.round(subtotal * 0.05);
+    const service = Math.round(subtotal * 0.10);
+    const total = subtotal + gst + service;
+
+    document.getElementById('subtotalVal').textContent = '₹' + subtotal;
+    document.getElementById('gstVal').textContent = '₹' + gst;
+    document.getElementById('serviceVal').textContent = '₹' + service;
+    document.getElementById('totalVal').textContent = '₹' + total;
+    totalsBox.style.display = 'block';
+    billBtn.disabled = false;
+  }
+
+  function generateBill() {
+    const customer = document.getElementById('customerName').value.trim() || 'Guest';
+    const table = document.getElementById('tableNumber').value.trim() || '—';
+    const entries = Object.entries(order).filter(([, v]) => v.qty > 0);
+    if (entries.length === 0) return;
+
+    let subtotal = 0;
+    let rowsHtml = '';
+    entries.forEach(([name, {price, qty}]) => {
+      const amt = price * qty;
+      subtotal += amt;
+      rowsHtml += `<tr>
+        <td>${name}</td>
+        <td style="text-align:center">${qty}</td>
+        <td style="text-align:right">₹${price}</td>
+        <td style="text-align:right">₹${amt}</td>
+      </tr>`;
+    });
+
+    const gst = (subtotal * 0.05).toFixed(2);
+    const service = (subtotal * 0.10).toFixed(2);
+    const total = (subtotal + parseFloat(gst) + parseFloat(service)).toFixed(2);
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN') + ' ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+
+    document.getElementById('billCustomer').textContent = customer;
+    document.getElementById('billTable').textContent = table;
+    document.getElementById('billDate').textContent = dateStr;
+    document.getElementById('billItems').innerHTML = rowsHtml;
+    document.getElementById('bSubtotal').textContent = '₹' + subtotal.toFixed(2);
+    document.getElementById('bGst').textContent = '₹' + gst;
+    document.getElementById('bService').textContent = '₹' + service;
+    document.getElementById('bTotal').textContent = '₹' + total;
+
+    document.getElementById('billModal').classList.add('show');
+  }
+
+  function closeBill() {
+    document.getElementById('billModal').classList.remove('show');
+  }
+
+  function clearAll() {
+    Object.keys(order).forEach(k => delete order[k]);
+    document.querySelectorAll('.qty-display').forEach(el => el.textContent = '0');
+    document.querySelectorAll('.menu-card').forEach(card => {
+      card.classList.remove('in-cart');
+      const badge = card.querySelector('.added-badge');
+      if (badge) badge.remove();
+    });
+    updateSidebar();
+  }
+
+  // Close modal on overlay click
+  document.getElementById('billModal').addEventListener('click', function(e) {
+    if (e.target === this) closeBill();
+  });
+</script>
+</body>
+</html>
